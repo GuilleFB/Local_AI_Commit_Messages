@@ -1,6 +1,19 @@
-# 🤖 Git Commit AI
+<p align="center">
+  <a href="README.md">🇪🇸 Spanish</a> •
+  <a href="README_FR.md">🇫🇷 Français</a> •
+</p>
 
-Intelligent commit message generator using local LLM models, optimized for Mac Apple Silicon (M1/M2/M3/M4/M5).
+<div align="center">
+  <h1>🤖 Git Commit AI</h1>
+  <p><b>Intelligent commit message generator using local LLM models, optimized for Mac Apple Silicon.</b></p>
+</div>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Powered_by-Ollama-black?logo=ollama&logoColor=white" alt="Ollama">
+  <img src="https://img.shields.io/badge/Platform-macOS_Apple_Silicon-lightgrey?logo=apple&logoColor=black" alt="Apple Silicon">
+  <img src="https://img.shields.io/badge/Privacy-100%25_Local_(Zero_Cost)-brightgreen" alt="Privacy & Cost">
+  <img src="https://img.shields.io/badge/Standard-Conventional_Commits-blue?logo=git&logoColor=white" alt="Conventional Commits">
+</p>
 
 ## ✨ Features
 
