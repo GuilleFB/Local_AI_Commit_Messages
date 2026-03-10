@@ -1,11 +1,11 @@
 <p align="center">
   <a href="README_EN.md">🇬🇧 English</a> •
-  <a href="README_FR.md">🇫🇷 Français</a> •
+  <a href="README_FR.md">🇫🇷 Français</a>
 </p>
 
 <div align="center">
   <h1>🤖 Git Commit AI</h1>
-  <p><b>Intelligent commit message generator using local LLM models, optimized for Mac Apple Silicon.</b></p>
+  <p><b>Generador inteligente de commit messages usando modelos LLM locales, optimizado para Mac Apple Silicon.</b></p>
 </div>
 
 <p align="center">
@@ -15,136 +15,90 @@
   <img src="https://img.shields.io/badge/Standard-Conventional_Commits-blue?logo=git&logoColor=white" alt="Conventional Commits">
 </p>
 
-# 🤖 Git Commit AI
-
-Generador inteligente de commit messages usando modelos LLM locales, optimizado para Mac Apple Silicon (M1/M2/M3/M4/M5).
-
 ## ✨ Características
 
-- 🎯 **Generación automática** de commits siguiendo Conventional Commits
-- 🚀 **Optimizado para Apple Silicon** con modelos locales (sin API keys)
-- 🎨 **Múltiples estilos**: conventional, simple, detailed
-- ✏️ **Modo interactivo** con edición pre-commit
-- 📋 **Integración con portapapeles**
-- 🔒 **Privacidad total**: todo se ejecuta localmente
-- ⚡ **Rápido y eficiente** con modelos optimizados
+- 🎯 **Generación automática** de commits siguiendo la especificación Conventional Commits.
+- 🚀 **Optimizado para Apple Silicon** usando modelos locales (sin API keys ni latencia de red).
+- 🛡️ **Extracción Limpia (REST API):** Inmune a la corrupción por colores ANSI o spinners de carga de la terminal. Garantiza texto plano perfecto para el portapapeles.
+- 🎨 **Múltiples estilos:** `conventional`, `simple`, `detailed`.
+- ✏️ **Modo interactivo** con edición pre-commit.
+- 🔒 **Privacidad total:** Tu código nunca abandona tu máquina.
+
+---
 
 ## 🔧 Instalación
 
-## Instalacion directa
+### Opción A: Instalación Automática (Recomendada)
+
+Ejecuta este comando en tu terminal. Instalará Ollama (si no lo tienes), descargará el modelo optimizado para código y configurará el script globalmente.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/GuilleFB/Local_AI_Commit_Messages/main/install.sh | bash
 ```
 
-### 1. Instalar Ollama
+### Opción B: Instalación Manual
+
+**1. Instalar Ollama**
 
 ```bash
-# Con Homebrew
 brew install ollama
-
-# O descarga desde https://ollama.ai
+# O descarga desde [https://ollama.com](https://ollama.com)
 ```
 
-### 2. Descargar el modelo recomendado
+**2. Descargar el modelo recomendado**
 
 ```bash
-# Instala automáticamente el mejor modelo
-./git-commit-ai.sh --install-model
-
-# O manualmente
 ollama pull qwen2.5-coder:7b
 ```
 
-### 3. Instalar el script
+**3. Instalar el script**
 
 ```bash
-# Hacer ejecutable
 chmod +x git-commit-ai.sh
-
-# Mover a PATH (opcional)
 sudo mv git-commit-ai.sh /usr/local/bin/gcai
-
-# O crear alias en ~/.zshrc o ~/.bashrc
-alias gcai='~/path/to/git-commit-ai.sh'
 ```
 
-### 4. Instalar dependencias opcionales
-
-```bash
-# Para mejor parsing de JSON
-brew install jq
-```
+---
 
 ## 🚀 Uso
 
 ### Básico
 
 ```bash
-# Genera y commitea automáticamente
-gcai
+# 1. Añadir al stage
+git add .
 
-# O si no lo instalaste globalmente
-./git-commit-ai.sh
+# 2. Generar y commitear automáticamente
+gcai
 ```
 
-### Opciones avanzadas
+### Opciones Avanzadas
 
 ```bash
-# Editar mensaje antes de commitear
-gcai -e
-
-# Solo generar, no commitear
-gcai -n
-
-# Generar y copiar al portapapeles
-gcai -n -c
-
-# Usar modelo diferente
-gcai -m llama3.2:3b
-
-# Cambiar estilo
-gcai -s simple
-
-# Modo verbose
-gcai -v
-
-# Solo cambios staged
-gcai --staged-only
+gcai -e                 # Generar y abrir el editor antes de commitear
+gcai -n                 # Solo generar el mensaje, no hacer commit
+gcai -n -c              # Generar y copiar al portapapeles en texto plano
+gcai -m llama3.2:3b     # Usar un modelo específico para este commit
+gcai -s simple          # Cambiar el estilo del mensaje
+gcai -v                 # Modo verbose (muestra estadísticas del diff)
+gcai --staged-only      # Forzar análisis solo de archivos en stage
 ```
 
-### Flujo de trabajo típico
-
-```bash
-# 1. Hacer cambios en tu código
-vim src/app.js
-
-# 2. Añadir al stage
-git add src/app.js
-
-# 3. Generar commit con IA
-gcai
-
-# 4. Confirmar o editar
-# El script preguntará antes de commitear
-```
+---
 
 ## 📝 Estilos de Commit
 
-### Conventional (default)
+### Conventional (Default)
 
-Sigue la especificación de Conventional Commits:
+Sigue la especificación estricta.
 
 ```
 feat(auth): add OAuth2 login support
-
-Implements OAuth2 flow with Google and GitHub providers.
-Includes token refresh logic and session management.
 ```
 
 ### Simple
 
-Mensajes concisos de una línea:
+Mensaje conciso de una línea en imperativo.
 
 ```
 add user authentication with OAuth2
@@ -152,7 +106,7 @@ add user authentication with OAuth2
 
 ### Detailed
 
-Mensajes con título y body detallado:
+Mensajes con título y cuerpo explicativo detallando el "por qué".
 
 ```
 Add OAuth2 authentication support
@@ -160,188 +114,61 @@ Add OAuth2 authentication support
 - Implements OAuth2 flow for Google and GitHub
 - Adds token refresh mechanism
 - Includes comprehensive error handling
-- Updates documentation with new auth flow
 ```
+
+---
 
 ## 🎯 Modelos Recomendados
 
 Para Mac M-series, ordenados por calidad vs velocidad:
 
-| Modelo | Tamaño | Velocidad | Calidad | Uso recomendado |
-|--------|--------|-----------|---------|-----------------|
-| `qwen2.5-coder:7b` | 4.7GB | Media | ⭐⭐⭐⭐⭐ | **Recomendado** - Mejor balance |
-| `deepseek-coder:6.7b` | 3.8GB | Media | ⭐⭐⭐⭐⭐ | Alternativa excelente |
-| `codellama:7b` | 3.8GB | Media | ⭐⭐⭐⭐ | Sólido para código |
-| `llama3.2:3b` | 2.0GB | Rápida | ⭐⭐⭐ | Para máquinas con poca RAM |
-| `qwen2.5:7b` | 4.7GB | Media | ⭐⭐⭐⭐ | General purpose |
-
-### Cambiar modelo por defecto
-
-```bash
-# Variable de entorno
-export GIT_COMMIT_AI_MODEL="deepseek-coder:6.7b"
-
-# O usar flag
-gcai -m deepseek-coder:6.7b
-```
-
-## ⚙️ Configuración
-
-### Variables de entorno
-
-Añade a tu `~/.zshrc` o `~/.bashrc`:
-
-```bash
-# Modelo por defecto
-export GIT_COMMIT_AI_MODEL="qwen2.5-coder:7b"
-
-# Estilo por defecto
-export GIT_COMMIT_AI_STYLE="conventional"
-
-# Temperatura (0.0-1.0, menor = más determinista)
-export GIT_COMMIT_AI_TEMP="0.3"
-
-# Límite de líneas del diff (5000 = máximo recomendado, 0 = sin límite)
-export GIT_COMMIT_AI_MAX_LINES="5000"
-```
-
-## 🎓 Ejemplos de Uso
-
-### Desarrollo de features
-
-```bash
-# Después de implementar nueva funcionalidad
-git add .
-gcai -s conventional
-# Genera: feat(api): add user pagination endpoint
-```
-
-### Bug fixes
-
-```bash
-git add src/bug-fix.js
-gcai
-# Genera: fix(validation): resolve null pointer in email check
-```
-
-### Refactoring
-
-```bash
-git add src/refactored/
-gcai -s detailed
-# Genera mensaje detallado explicando la refactorización
-```
-
-### Documentación
-
-```bash
-git add README.md
-gcai
-# Genera: docs(readme): update installation instructions
-```
-
-## 🔍 Troubleshooting
-
-### "Ollama no está ejecutándose"
-
-```bash
-# Inicia Ollama
-ollama serve
-
-# O abre la app Ollama desde Aplicaciones
-```
-
-### "Modelo no encontrado"
-
-```bash
-# Instala el modelo
-ollama pull qwen2.5-coder:7b
-
-# Verifica modelos instalados
-ollama list
-```
-
-### "No hay cambios para analizar"
-
-```bash
-# Asegúrate de tener cambios staged
-git status
-git add <archivos>
-```
-
-### Mensajes de baja calidad
-
-```bash
-# Prueba con temperatura más baja (más determinista)
-export GIT_COMMIT_AI_TEMP="0.1"
-
-# O usa un modelo más grande
-gcai -m qwen2.5-coder:14b
-```
-
-## 🚀 Tips Pro
-
-### 1. Alias útiles
-
-```bash
-# En ~/.zshrc o ~/.bashrc
-alias gcae='gcai -e'              # Siempre editar
-alias gcan='gcai -n -c'            # Solo generar y copiar
-alias gcaq='gcai -m llama3.2:3b'  # Versión rápida
-```
-
-### 2. Git hooks
-
-```bash
-# Usa como prepare-commit-msg hook
-cd tu-repo/.git/hooks
-ln -s /usr/local/bin/gcai prepare-commit-msg
-```
-
-### 3. Integración con workflow
-
-```bash
-# Añade cambios y genera commit en un paso
-git add . && gcai
-```
-
-### 4. Review antes de push
-
-```bash
-# Genera mensaje, revisa, y luego push
-gcai -e && git push
-```
-
-## 📊 Comparación con Alternativas
-
-| Feature | git-commit-ai | Copilot | ChatGPT API |
-|---------|---------------|---------|-------------|
-| Costo | ✅ Gratis | ❌ $10/mes | ❌ $0.002/request |
-| Privacidad | ✅ 100% local | ❌ Cloud | ❌ Cloud |
-| Offline | ✅ Sí | ❌ No | ❌ No |
-| Velocidad | ✅ <2s | ⚠️ 3-5s | ⚠️ 2-4s |
-| Personalizable | ✅ Total | ❌ Limitado | ⚠️ Medio |
-
-## 🤝 Contribuir
-
-Mejoras sugeridas son bienvenidas. Areas de mejora:
-
-- [ ] Soporte para más estilos de commit
-- [ ] Integración con pre-commit hooks
-- [ ] Análisis de contexto del repo
-- [ ] Sugerencias multi-idioma
-- [ ] Cache de modelos
-
-## 📄 Licencia
-
-MIT License - Úsalo libremente
-
-## 🙏 Créditos
-
-- Powered by [Ollama](https://ollama.ai)
-- Modelos: Qwen, DeepSeek, Meta Llama
-- Convencional Commits: [conventionalcommits.org](https://www.conventionalcommits.org/)
+| Modelo | Tamaño | RAM Req. | Calidad | Uso recomendado |
+| --- | --- | --- | --- | --- |
+| `qwen2.5-coder:7b` | 4.7GB | 8GB+ | ⭐⭐⭐⭐⭐ | **Recomendado** - Mejor razonamiento de código |
+| `deepseek-coder:6.7b` | 3.8GB | 8GB+ | ⭐⭐⭐⭐⭐ | Alternativa excelente y ligera |
+| `llama3.2:3b` | 2.0GB | 4GB+ | ⭐⭐⭐ | Extremadamente rápido. Para Macs antiguos |
 
 ---
 
-**Hecho con ❤️ para desarrolladores que valoran su privacidad y velocidad**
+## ⚙️ Configuración
+
+Puedes personalizar el comportamiento por defecto añadiendo estas variables a tu `~/.zshrc` o `~/.bashrc`:
+
+```bash
+export GIT_COMMIT_AI_MODEL="qwen2.5-coder:7b"
+export GIT_COMMIT_AI_STYLE="conventional"
+export GIT_COMMIT_AI_TEMP="0.3"  # Menor = más determinista
+```
+
+---
+
+## 🔍 Troubleshooting
+
+**"Ollama no está ejecutándose"**
+Inicia el motor en segundo plano:
+
+```bash
+ollama serve
+```
+
+**Mensajes con basura visual en el portapapeles**
+Asegúrate de estar ejecutando la última versión del script (`gcai`), la cual utiliza la API REST de Ollama (`http://localhost:11434/api/generate`) y el parser de Python nativo de macOS para garantizar una extracción de texto 100% limpia.
+
+---
+
+## 📊 Comparación con Alternativas
+
+| Feature | Git Commit AI | GitHub Copilot | ChatGPT / Claude API |
+| --- | --- | --- | --- |
+| **Costo** | ✅ Gratis ($0) | ❌ $10/mes | ❌ Pago por uso |
+| **Privacidad** | ✅ 100% Local | ❌ Nube | ❌ Nube |
+| **Offline** | ✅ Sí | ❌ No | ❌ No |
+| **Integración CLI** | ✅ Nativa | ⚠️ Requiere extensiones | ❌ Requiere scripts custom |
+
+---
+
+## 📄 Licencia
+
+MIT License - Úsalo y modifícalo libremente.
+
+**Hecho con ❤️ para desarrolladores que exigen velocidad y privacidad absoluta.**
