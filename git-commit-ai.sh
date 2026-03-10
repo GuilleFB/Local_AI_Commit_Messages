@@ -73,13 +73,15 @@ check_ollama_running() {
 
 check_model_available() {
     local model="$1"
-    # Eliminado el ancla '^' para evitar fallos con códigos de escape ANSI de ZSH
-    if ! ollama list | grep -q "${model%%:*}"; then
+    
+    # Red Team Fix: Usamos la API REST en lugar de la CLI para evitar colores ANSI
+    if ! curl -s http://localhost:11434/api/tags | grep -q "\"name\":\"${model}\""; then
         log_warning "Model '$model' not found locally."
-        read -p "Download now? (y/n): " -n 1 -r
+        read -p "Download now? (y/n): " -n 1 -r < /dev/tty
         echo >&2
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             log_info "Downloading model $model..."
+            # Aquí sí usamos la CLI porque queremos que el usuario vea la barra de progreso
             ollama pull "$model"
         else
             log_error "Model not available. Aborting."
@@ -151,27 +153,35 @@ generate_commit_message() {
     local diff="$3"
     
     local prompt=$(generate_prompt "$style" "$diff")
+    
+    # Red Team Fix: Escapamos el prompt a formato JSON de forma segura usando Python
+    local escaped_prompt=$(python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))' <<< "$prompt")
+    
+    # Construimos el payload para la API (stream: false garantiza que nos devuelva la respuesta completa de golpe)
+    local payload="{\"model\": \"$model\", \"prompt\": $escaped_prompt, \"stream\": false, \"options\": {\"temperature\": $TEMPERATURE}}"
+    
     local response
-    local err_file=$(mktemp)
-    
-    # AISLAMIENTO DE FLUJOS:
-    # stdout (el texto útil de la IA) se guarda en la variable 'response'.
-    # stderr (el spinner de carga y posibles errores) se desvía a un archivo temporal.
-    response=$(ollama run "$model" <<< "$prompt" 2>"$err_file")
-    
-    if [ $? -ne 0 ]; then
-        log_error "Error generating message with Ollama:"
-        cat "$err_file" >&2
-        rm -f "$err_file"
+    # Llamada limpia a la API, sin animaciones ni spinners
+    response=$(curl -s -X POST http://localhost:11434/api/generate \
+        -H "Content-Type: application/json" \
+        -d "$payload")
+        
+    if [ -z "$response" ]; then
+        log_error "Error: Ollama API did not respond."
         exit 1
     fi
     
-    # Limpiamos el archivo de error temporal si todo fue bien
-    rm -f "$err_file"
+    # Extraemos solo el campo 'response' del JSON usando Python
+    local clean_msg
+    clean_msg=$(echo "$response" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('response', ''))" 2>/dev/null)
     
-    # Limpieza compatible con BSD sed (macOS) y awk (elimina markdown y líneas vacías)
-    # Adicionalmente, usamos 'tr' para eliminar cualquier código de control residual por seguridad
-    echo "$response" | sed 's/^```.*$//' | awk 'NF' | tr -d '\r'
+    if [ -z "$clean_msg" ]; then
+        log_error "Error parsing API response."
+        exit 1
+    fi
+    
+    # Limpieza final: quitar comillas invertidas de markdown (```) si el modelo las incluyó
+    echo "$clean_msg" | sed 's/^```.*$//' | awk 'NF'
 }
 
 # ============================================================================
