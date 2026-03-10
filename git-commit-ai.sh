@@ -152,20 +152,26 @@ generate_commit_message() {
     
     local prompt=$(generate_prompt "$style" "$diff")
     local response
+    local err_file=$(mktemp)
     
-    # Se añade control de temperatura localmente en la llamada a Ollama vía CLI 
-    # (Nota: CLI no soporta flags nativos de temperatura, depende de la configuración del modelo,
-    # pero aseguramos una ejecución limpia).
-    response=$(ollama run "$model" <<< "$prompt" 2>&1)
+    # AISLAMIENTO DE FLUJOS:
+    # stdout (el texto útil de la IA) se guarda en la variable 'response'.
+    # stderr (el spinner de carga y posibles errores) se desvía a un archivo temporal.
+    response=$(ollama run "$model" <<< "$prompt" 2>"$err_file")
     
     if [ $? -ne 0 ]; then
-        log_error "Error generating message with Ollama"
-        echo "$response" >&2
+        log_error "Error generating message with Ollama:"
+        cat "$err_file" >&2
+        rm -f "$err_file"
         exit 1
     fi
     
-    # Limpieza compatible con BSD sed (macOS) y awk
-    echo "$response" | sed 's/^```.*$//' | awk 'NF'
+    # Limpiamos el archivo de error temporal si todo fue bien
+    rm -f "$err_file"
+    
+    # Limpieza compatible con BSD sed (macOS) y awk (elimina markdown y líneas vacías)
+    # Adicionalmente, usamos 'tr' para eliminar cualquier código de control residual por seguridad
+    echo "$response" | sed 's/^```.*$//' | awk 'NF' | tr -d '\r'
 }
 
 # ============================================================================

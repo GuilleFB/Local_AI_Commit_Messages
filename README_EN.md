@@ -14,6 +14,12 @@ Intelligent commit message generator using local LLM models, optimized for Mac A
 
 ## 🔧 Installation
 
+## Remote installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GuilleFB/Local_AI_Commit_Messages/main/install.sh | bash
+```
+
 ### 1. Install Ollama
 
 ```bash
