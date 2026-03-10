@@ -14,7 +14,7 @@ Generador inteligente de commit messages usando modelos LLM locales, optimizado 
 
 ## 🔧 Instalación
 
-## Instalacion directa:
+## Instalacion directa
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/GuilleFB/Local_AI_Commit_Messages/main/install.sh | bash

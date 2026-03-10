@@ -59,7 +59,7 @@ echo "✅ Installed in: $INSTALL_DIR/$SCRIPT_NAME"
 # Configurar variables de entorno
 echo ""
 read -p "Add configuration to ~/.zshrc? (y/n): " -n 1 -r
-echo
+echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     cat >> ~/.zshrc <<'EOF'
 
