@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Instalador rápido de git-commit-ai
-# Ejecuta: curl -fsSL <url> | bash
+# Ejecuta: curl -fsSL https://github.com/GuilleFB/Local_AI_Commit_Messages/blob/main/install.sh | bash
 
 set -e
 

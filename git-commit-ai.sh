@@ -294,7 +294,7 @@ generate_commit_message() {
     
     # Llama a Ollama
     local response
-    response=$(ollama run "$model" --temperature "$TEMPERATURE" <<< "$prompt" 2>&1)
+    response=$(ollama run "$model" <<< "$prompt" 2>&1)
     
     if [ $? -ne 0 ]; then
         log_error "Error generating message with Ollama"
