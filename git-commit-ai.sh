@@ -15,8 +15,9 @@ MODEL="${GIT_COMMIT_AI_MODEL:-qwen2.5-coder:7b}"
 # Estilos de commit disponibles
 COMMIT_STYLE="${GIT_COMMIT_AI_STYLE:-conventional}"  # conventional, simple, detailed
 
-# Límite de líneas del diff para análisis
-MAX_DIFF_LINES="${GIT_COMMIT_AI_MAX_LINES:-500}"
+# Límite de líneas del diff para análisis (modelos modernos soportan ~128k tokens)
+# ~5000 líneas ≈ 50-100k tokens dependiendo del contenido
+MAX_DIFF_LINES="${GIT_COMMIT_AI_MAX_LINES:-5000}"
 
 # Temperatura del modelo (0.0-1.0, menor = más determinista)
 TEMPERATURE="${GIT_COMMIT_AI_TEMP:-0.3}"
@@ -50,37 +51,37 @@ log_error() {
 
 show_usage() {
     cat <<EOF
-Uso: $(basename "$0") [OPCIONES]
+Usage: $(basename "$0") [OPTIONS]
 
-Genera mensajes de commit inteligentes usando IA local.
+Generate intelligent commit messages using local AI.
 
-OPCIONES:
-    -h, --help              Muestra esta ayuda
-    -m, --model MODEL       Especifica el modelo LLM (default: qwen2.5-coder:7b)
-    -s, --style STYLE       Estilo: conventional, simple, detailed (default: conventional)
-    -e, --edit              Edita el mensaje antes de commitear
-    -n, --no-commit         Solo genera el mensaje, no hace commit
-    -c, --clipboard         Copia el mensaje al portapapeles
-    -v, --verbose           Modo verbose
-    --staged-only           Solo considera cambios staged
-    --install-model         Instala el modelo recomendado
+OPTIONS:
+    -h, --help              Show this help
+    -m, --model MODEL       Specify the LLM model (default: qwen2.5-coder:7b)
+    -s, --style STYLE       Style: conventional, simple, detailed (default: conventional)
+    -e, --edit              Edit the message before committing
+    -n, --no-commit         Just generate the message, don't commit
+    -c, --clipboard         Copy the message to the clipboard
+    -v, --verbose           Verbose mode
+    --staged-only           Only consider staged changes
+    --install-model         Install the recommended model
 
-VARIABLES DE ENTORNO:
-    GIT_COMMIT_AI_MODEL     Modelo por defecto
-    GIT_COMMIT_AI_STYLE     Estilo por defecto
-    GIT_COMMIT_AI_TEMP      Temperatura del modelo (0.0-1.0)
+ENVIRONMENTAL VARIABLES:
+    GIT_COMMIT_AI_MODEL     Default model
+    GIT_COMMIT_AI_STYLE     Default style
+    GIT_COMMIT_AI_TEMP      Model temperature (0.0-1.0)
 
-EJEMPLOS:
-    $(basename "$0")                    # Genera y commitea automáticamente
-    $(basename "$0") -e                 # Genera y permite editar
-    $(basename "$0") -n -c              # Solo genera y copia al portapapeles
-    $(basename "$0") -m llama3.2:3b     # Usa modelo más rápido
+EXAMPLES:
+    $(basename "$0")                    # Automatically generate and commit
+    $(basename "$0") -e                 # Generate and allow editing
+    $(basename "$0") -n -c              # Just generate and copy to the clipboard
+    $(basename "$0") -m llama3.2:3b     # Use faster model
 
-MODELOS RECOMENDADOS PARA MAC M-SERIES:
-    qwen2.5-coder:7b       - Mejor calidad para código (recomendado)
-    deepseek-coder:6.7b    - Excelente para commits técnicos
-    llama3.2:3b            - Más rápido, menor consumo de memoria
-    codellama:7b           - Alternativa sólida
+RECOMMENDED MODELS FOR MAC M-SERIES:
+    qwen2.5-coder:7b       - Better quality for code (recommended)
+    deepseek-coder:6.7b    - Great for technical commits
+    llama3.2:3b            - Faster, lower memory consumption
+    codellama:7b           - Solid alternative
 
 EOF
 }
@@ -95,40 +96,40 @@ check_dependencies() {
 
     # Ollama es obligatorio
     if ! command -v ollama &> /dev/null; then
-        log_error "Ollama no está instalado."
+        log_error "Ollama is not installed."
         echo ""
-        echo "Para instalar Ollama en Mac:"
+        echo "To install Ollama on Mac:"
         echo "  brew install ollama"
-        echo "  O descarga desde: https://ollama.ai"
+        echo "  Or download from: https://ollama.ai"
         echo ""
         exit 1
     fi
 
     # jq es útil pero opcional
     if ! command -v jq &> /dev/null; then
-        log_warning "jq no está instalado. Se recomienda para mejor parsing: brew install jq"
+        log_warning "jq is not installed. Recommended for better parsing: brew install jq"
     fi
 
     if [ ${#missing_deps[@]} -ne 0 ]; then
-        log_error "Dependencias faltantes: ${missing_deps[*]}"
+        log_error "Missing dependencies: ${missing_deps[*]}"
         exit 1
     fi
 }
 
 check_git_repo() {
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
-        log_error "No estás en un repositorio Git"
+        log_error "You are not in a Git repository."
         exit 1
     fi
 }
 
 check_ollama_running() {
     if ! ollama list &> /dev/null; then
-        log_warning "Ollama no está ejecutándose. Intentando iniciar..."
+        log_warning "Ollama is not running. Attempting to start..."
         # En Mac, Ollama debería iniciarse automáticamente
         sleep 2
         if ! ollama list &> /dev/null; then
-            log_error "No se puede conectar con Ollama. Inicia la aplicación Ollama."
+            log_error "Unable to connect to Ollama. Launch the Ollama application."
             exit 1
         fi
     fi
@@ -138,14 +139,14 @@ check_model_available() {
     local model="$1"
     
     if ! ollama list | grep -q "^${model%%:*}"; then
-        log_warning "Modelo '$model' no encontrado localmente."
-        read -p "¿Descargar ahora? (s/n): " -n 1 -r
+        log_warning "Model '$model' not found locally."
+        read -p "Download now? (y/n): " -n 1 -r
         echo
-        if [[ $REPLY =~ ^[Ss]$ ]]; then
-            log_info "Descargando modelo $model..."
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Downloading template $model..."
             ollama pull "$model"
         else
-            log_error "Modelo no disponible. Abortando."
+            log_error "Model not available. Aborting."
             exit 1
         fi
     fi
@@ -159,8 +160,8 @@ get_diff() {
         diff_output=$(git diff --staged --no-color)
         
         if [ -z "$diff_output" ]; then
-            log_error "No hay cambios staged para commitear."
-            log_info "Usa 'git add' para añadir archivos al stage."
+            log_error "There are no staged changes to commit.."
+            log_info "Use 'git add' to add files to the staging area."
             exit 1
         fi
     else
@@ -171,23 +172,25 @@ get_diff() {
             diff_output=$(git diff --no-color)
             
             if [ -z "$diff_output" ]; then
-                log_error "No hay cambios para analizar."
+                log_error "There are no changes to analyze."
                 exit 1
             fi
             
-            log_warning "Usando cambios unstaged. Considera hacer 'git add' primero."
+            log_warning "Using unstaged changes. Consider doing 'git add' first."
         fi
     fi
 
-    # Limita el tamaño del diff
-    local line_count=$(echo "$diff_output" | wc -l | tr -d ' ')
-    
-    if [ "$line_count" -gt "$MAX_DIFF_LINES" ]; then
-        log_warning "Diff muy largo ($line_count líneas). Truncando a $MAX_DIFF_LINES líneas."
-        diff_output=$(echo "$diff_output" | head -n "$MAX_DIFF_LINES")
-        diff_output="$diff_output
+    # Limita el tamaño del diff (0 = sin límite)
+    if [ "$MAX_DIFF_LINES" -gt 0 ]; then
+        local line_count=$(echo "$diff_output" | wc -l | tr -d ' ')
+        
+        if [ "$line_count" -gt "$MAX_DIFF_LINES" ]; then
+            log_warning "Very long diff ($line_count lines). Truncating the $MAX_DIFF_LINES lines."
+            diff_output=$(echo "$diff_output" | head -n "$MAX_DIFF_LINES")
+            diff_output="$diff_output
 
-[... diff truncado, ${line_count} líneas totales ...]"
+[... truncated diff, ${line_count} total lines ...]"
+        fi
     fi
 
     echo "$diff_output"
@@ -208,23 +211,23 @@ generate_prompt() {
     case "$style" in
         conventional)
             cat <<EOF
-Eres un experto en Git y desarrollo de software. Analiza el siguiente diff y genera un commit message siguiendo la convención Conventional Commits.
+You are an expert in Git and software development. Analyze the following diff and generate a commit message following the Conventional Commits convention. 
 
-REGLAS ESTRICTAS:
-1. Formato: <type>(<scope>): <description>
-2. Types válidos: feat, fix, docs, style, refactor, perf, test, chore, ci, build
-3. Scope es opcional pero recomendado (nombre del módulo/archivo afectado)
-4. Description: imperativo, minúsculas, sin punto final, máximo 50 caracteres
-5. Si hay breaking changes, añadir línea "BREAKING CHANGE:" en el body
-6. Body opcional: explica el "qué" y "por qué", no el "cómo"
+STRICT RULES:
+1. Format: <type>(<scope>): <description>
+2. Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, build
+3. Scope is optional but recommended (name of affected module/file)
+4. Description: imperative, lowercase, no period, maximum 50 characters
+5. If there are breaking changes, add the line "BREAKING CHANGE:" in the body.
+6. Optional body: explain the "what" and "why," not the "how."
 
-EJEMPLOS:
+EXAMPLES:
 - feat(auth): add OAuth2 login support
 - fix(api): resolve null pointer in user validation
 - refactor(db): optimize query performance
 - docs(readme): update installation instructions
 
-Responde SOLO con el commit message, sin explicaciones adicionales.
+Respond ONLY with the commit message, without additional explanations.
 
 DIFF:
 \`\`\`diff
@@ -236,13 +239,13 @@ EOF
             ;;
         simple)
             cat <<EOF
-Genera un commit message simple y claro que describa los cambios en el siguiente diff.
+Generate a simple and clear commit message that describes the changes in the following diff.
 
-REGLAS:
-- Una línea concisa de máximo 72 caracteres
-- Usa imperativo (add, fix, update, remove)
-- Sin emojis ni formato especial
-- Directo al grano
+RULES:
+- A concise line of no more than 72 characters
+- Use imperative (add, fix, update, remove)
+- No emojis or special formatting
+- Straight to the point
 
 DIFF:
 \`\`\`diff
@@ -254,12 +257,12 @@ EOF
             ;;
         detailed)
             cat <<EOF
-Analiza el diff y genera un commit message detallado con título y body.
+Analyze the diff and generate a detailed commit message with a title and body.
 
-FORMATO:
-Línea 1: Título conciso (máx 50 chars)
-Línea 2: (vacía)
-Línea 3+: Body explicando cambios importantes, motivación, contexto
+FORMAT:
+Line 1: Concise title (max. 50 characters)
+Line 2: (empty)
+Line 3+: Body explaining important changes, motivation, context
 
 DIFF:
 \`\`\`diff
@@ -270,7 +273,7 @@ COMMIT MESSAGE:
 EOF
             ;;
         *)
-            log_error "Estilo desconocido: $style"
+            log_error "Unknown style: $style"
             exit 1
             ;;
     esac
@@ -285,8 +288,8 @@ generate_commit_message() {
     local prompt=$(generate_prompt "$style" "$diff")
     
     if [ "$verbose" = true ]; then
-        log_info "Generando mensaje con modelo: $model"
-        log_info "Estilo: $style"
+        log_info "Generating message with model: $model"
+        log_info "Style: $style"
     fi
     
     # Llama a Ollama
@@ -294,7 +297,7 @@ generate_commit_message() {
     response=$(ollama run "$model" --temperature "$TEMPERATURE" <<< "$prompt" 2>&1)
     
     if [ $? -ne 0 ]; then
-        log_error "Error al generar mensaje con Ollama"
+        log_error "Error generating message with Ollama"
         echo "$response" >&2
         exit 1
     fi
@@ -305,18 +308,18 @@ generate_commit_message() {
 }
 
 install_recommended_model() {
-    log_info "Instalando modelo recomendado: qwen2.5-coder:7b"
-    log_info "Este modelo está optimizado para código y Apple Silicon"
+    log_info "Installing recommended model: qwen2.5-coder:7b"
+    log_info "This model is optimized for code and Apple Silicon."
     echo ""
     
     ollama pull qwen2.5-coder:7b
     
     if [ $? -eq 0 ]; then
-        log_success "Modelo instalado correctamente"
+        log_success "Model installed correctly"
         echo ""
-        log_info "Ahora puedes usar: $(basename "$0")"
+        log_info "Now you can use: $(basename "$0")"
     else
-        log_error "Error al instalar el modelo"
+        log_error "Error installing the model"
         exit 1
     fi
 }
@@ -333,6 +336,13 @@ main() {
     local staged_only=false
     local custom_model=""
     local custom_style=""
+
+    # Detección automática: si se llama como "gdcopy", activa modo clipboard
+    local script_name=$(basename "$0")
+    if [[ "$script_name" == "gdcopy" ]]; then
+        no_commit=true
+        clipboard=true
+    fi
 
     # Parse argumentos
     while [[ $# -gt 0 ]]; do
@@ -374,7 +384,7 @@ main() {
                 exit 0
                 ;;
             *)
-                log_error "Opción desconocida: $1"
+                log_error "Unknown option: $1"
                 show_usage
                 exit 1
                 ;;
@@ -392,7 +402,7 @@ main() {
     check_model_available "$final_model"
 
     # Obtener diff
-    log_info "Analizando cambios..."
+    log_info "Analyzing changes..."
     local diff_content=$(get_diff "$staged_only")
     
     if [ "$verbose" = true ]; then
@@ -400,12 +410,12 @@ main() {
     fi
 
     # Generar mensaje
-    log_info "Generando commit message con IA..."
+    log_info "Generating commit messages with AI..."
     local commit_msg=$(generate_commit_message "$final_model" "$final_style" "$diff_content" "$verbose")
 
     # Validar que se generó algo
     if [ -z "$commit_msg" ]; then
-        log_error "No se pudo generar el commit message"
+        log_error "The commit message could not be generated."
         exit 1
     fi
 
@@ -422,15 +432,15 @@ main() {
     if [ "$clipboard" = true ]; then
         if command -v pbcopy &> /dev/null; then
             echo "$commit_msg" | pbcopy
-            log_success "Copiado al portapapeles"
+            log_success "Copied to clipboard"
         else
-            log_warning "pbcopy no disponible en este sistema"
+            log_warning "pbcopy is not available on this system"
         fi
     fi
 
     # Si solo queremos generar, salimos
     if [ "$no_commit" = true ]; then
-        log_info "Mensaje generado. No se hizo commit (--no-commit)"
+        log_info "Message generated. No commit made (--no-commit)"
         exit 0
     fi
 
@@ -446,10 +456,10 @@ main() {
 
     # Confirmar commit
     if [ "$edit" = false ]; then
-        read -p "¿Hacer commit con este mensaje? (s/n): " -n 1 -r
+        read -p "Commit with this message? (y/n): " -n 1 -r
         echo
-        if [[ ! $REPLY =~ ^[Ss]$ ]]; then
-            log_info "Commit cancelado"
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Commit canceled"
             exit 0
         fi
     fi
@@ -458,9 +468,9 @@ main() {
     git commit -m "$commit_msg"
     
     if [ $? -eq 0 ]; then
-        log_success "Commit realizado exitosamente"
+        log_success "Commit successfully completed"
     else
-        log_error "Error al hacer commit"
+        log_error "Error when committing"
         exit 1
     fi
 }

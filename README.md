@@ -178,8 +178,8 @@ export GIT_COMMIT_AI_STYLE="conventional"
 # Temperatura (0.0-1.0, menor = más determinista)
 export GIT_COMMIT_AI_TEMP="0.3"
 
-# Límite de líneas del diff
-export GIT_COMMIT_AI_MAX_LINES="500"
+# Límite de líneas del diff (5000 = máximo recomendado, 0 = sin límite)
+export GIT_COMMIT_AI_MAX_LINES="5000"
 ```
 
 ## 🎓 Ejemplos de Uso
