@@ -14,6 +14,12 @@ Générateur intelligent de messages de commit utilisant des modèles LLM locaux
 
 ## 🔧 Installation
 
+## Installation à distance
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GuilleFB/Local_AI_Commit_Messages/main/install.sh | bash
+```
+
 ### 1. Installer Ollama
 
 ```bash
