@@ -5,36 +5,36 @@
 
 set -e
 
-echo "🤖 Instalador de Git Commit AI"
+echo "🤖 Git Commit AI Installer"
 echo ""
 
 # Verificar que estamos en Mac
 if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo "⚠️  Este instalador está optimizado para macOS"
-    read -p "¿Continuar de todos modos? (s/n): " -n 1 -r
+    echo "⚠️  This installer is optimized for macOS."
+    read -p "Continue anyway? (y/n): " -n 1 -r
     echo
-    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         exit 1
     fi
 fi
 
 # Verificar/Instalar Ollama
-echo "Verificando Ollama..."
+echo "Checking Ollama..."
 if ! command -v ollama &> /dev/null; then
-    echo "❌ Ollama no encontrado"
+    echo "❌ Ollama not found"
     echo ""
-    echo "Instálalo con:"
+    echo "Install it with:"
     echo "  brew install ollama"
-    echo "  O desde: https://ollama.ai"
+    echo "  Or from: https://ollama.ai"
     exit 1
 else
-    echo "✅ Ollama instalado"
+    echo "✅ Ollama installed"
 fi
 
 # Descargar modelo
 echo ""
-echo "Descargando modelo qwen2.5-coder:7b..."
-echo "Esto puede tardar varios minutos (4.7GB)"
+echo "Downloading model qwen2.5-coder:7b..."
+echo "This may take several minutes (4.7GB)."
 ollama pull qwen2.5-coder:7b
 
 # Instalar script
@@ -42,11 +42,11 @@ INSTALL_DIR="/usr/local/bin"
 SCRIPT_NAME="gcai"
 
 echo ""
-echo "Instalando script como '$SCRIPT_NAME'..."
+echo "Installing script as '$SCRIPT_NAME'..."
 
 # Verificar permisos
 if [ ! -w "$INSTALL_DIR" ]; then
-    echo "Necesitas permisos de administrador"
+    echo "You need administrator permissions."
     sudo cp git-commit-ai.sh "$INSTALL_DIR/$SCRIPT_NAME"
     sudo chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
 else
@@ -54,13 +54,13 @@ else
     chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
 fi
 
-echo "✅ Instalado en: $INSTALL_DIR/$SCRIPT_NAME"
+echo "✅ Installed in: $INSTALL_DIR/$SCRIPT_NAME"
 
 # Configurar variables de entorno
 echo ""
-read -p "¿Añadir configuración a ~/.zshrc? (s/n): " -n 1 -r
+read -p "Add configuration to ~/.zshrc? (y/n): " -n 1 -r
 echo
-if [[ $REPLY =~ ^[Ss]$ ]]; then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     cat >> ~/.zshrc <<'EOF'
 
 # Git Commit AI
@@ -68,24 +68,24 @@ export GIT_COMMIT_AI_MODEL="qwen2.5-coder:7b"
 export GIT_COMMIT_AI_STYLE="conventional"
 export GIT_COMMIT_AI_TEMP="0.3"
 EOF
-    echo "✅ Configuración añadida a ~/.zshrc"
-    echo "Ejecuta: source ~/.zshrc"
+    echo "✅ Configuration added to ~/.zshrc"
+    echo "Run: source ~/.zshrc"
 fi
 
 # Finalizar
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎉 ¡Instalación completada!"
+echo "🎉 Installation complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "Uso básico:"
-echo "  cd tu-proyecto"
+echo "Basic usage:"
+echo "  cd your-project"
 echo "  git add ."
 echo "  gcai"
 echo ""
-echo "Ver ayuda completa:"
+echo "See full help:"
 echo "  gcai --help"
 echo ""
-echo "Probar:"
-echo "  gcai -n -v  # Genera mensaje sin commitear"
+echo "Test:"
+echo "  gcai -n -v  # Generate message without committing"
 echo ""
